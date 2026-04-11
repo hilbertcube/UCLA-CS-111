@@ -1,0 +1,33 @@
+lectures/
+
+# Kernel module build artifacts
+*.ko
+*.o
+*.mod
+*.mod.c
+*.mod.o
+*.symvers
+*.order
+modules.builtin
+Module.symvers
+modules.order
+.tmp_versions/
+*.cmd
+.*.cmd
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Python virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Editor / OS
+.vscode/
+.idea/
+*~
+.DS_Store
