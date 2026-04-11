@@ -23,11 +23,13 @@ make clean
 ```python
 python -m unittest
 ```
-TODO: paste your test output here after running on the VM
-
 Test output:
 ```shell
+...
+----------------------------------------------------------------------
+Ran 3 tests in 2.293s
 
+OK
 ```
 
 
@@ -38,9 +40,7 @@ It should match release numbers as seen on https://www.kernel.org/.
 ```shell
 uname -r -s -v
 ```
-TODO: paste your kernel version here after running `uname -r -s -v` on the VM
-
 Kernel version:
 ```shell
-
+Linux 5.14.8-arch1-1 #1 SMP PREEMPT Sun, 26 Sep 2021 19:36:15 +0000
 ```
