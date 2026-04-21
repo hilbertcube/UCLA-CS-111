@@ -2,16 +2,37 @@
 
 ## Pipe Up
 
-One sentence description
+Executes a chain of programs connected by pipes, mimicking the shell `|` operator.
 
 ## Building
 
-Explain briefly how to build your program
+```
+make
+```
+
+This compiles `pipe.c` into the `pipe` executable.
 
 ## Running
 
-Show an example run of your program, using at least two additional arguments, and what to expect
+Pass the programs you want to pipe together as arguments:
+
+```
+./pipe ls cat wc
+```
+
+This is equivalent to running `ls | cat | wc` in the shell. A single program is also valid:
+
+```
+./pipe ls
+```
+
+The first program receives the parent's standard input, the last program writes to the parent's standard output, and all standard error output goes to the parent's standard error.
 
 ## Cleaning up
 
-Explain briefly how to clean up all binary files
+```
+make clean
+```
+
+This removes the compiled object file and the `pipe` executable.
+

@@ -1,4 +1,4 @@
-#include <fcntl.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -6,6 +6,5 @@
 
 int main(int argc, char *argv[])
 {
-	// TODO: it's all yours
-	return 0;
+	// TODO
 }
