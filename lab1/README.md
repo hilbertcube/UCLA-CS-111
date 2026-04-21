@@ -1,4 +1,4 @@
-## UID: 123456789
+## UID: 706752260
 
 ## Pipe Up
 
@@ -14,7 +14,7 @@ This compiles `pipe.c` into the `pipe` executable.
 
 ## Running
 
-Pass the programs you want to pipe together as arguments:
+Pass the programs we want to pipe together as arguments:
 
 ```
 ./pipe ls cat wc
