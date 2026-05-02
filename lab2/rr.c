@@ -18,9 +18,12 @@ struct process
   u32 arrival_time;
   u32 burst_time;
 
-  TAILQ_ENTRY(process) pointers;
+  TAILQ_ENTRY(process)
+  pointers;
 
   /* Additional fields here */
+  u32 remaining_time;
+  bool started;
   /* End of "Additional fields here" */
 };
 
@@ -160,7 +163,65 @@ int main(int argc, char *argv[])
   u32 total_response_time = 0;
 
   /* Your code here */
-  
+  for (u32 i = 0; i < size; ++i)
+  {
+    data[i].remaining_time = data[i].burst_time;
+    data[i].started = false;
+  }
+
+  u32 completed = 0;
+  u32 current_time = 0;
+  u32 quantum_left = 0;
+  struct process *current = NULL;
+
+  while (completed < size)
+  {
+    for (u32 i = 0; i < size; ++i)
+    {
+      if (data[i].arrival_time == current_time)
+      {
+        TAILQ_INSERT_TAIL(&list, &data[i], pointers);
+      }
+    }
+
+    /* If the running process used up its quantum but still has work,
+       re-queue it after any arrivals at this same time. */
+    if (current != NULL && quantum_left == 0)
+    {
+      TAILQ_INSERT_TAIL(&list, current, pointers);
+      current = NULL;
+    }
+
+    /* Pick the next process to run if the CPU is idle. */
+    if (current == NULL && !TAILQ_EMPTY(&list))
+    {
+      current = TAILQ_FIRST(&list);
+      TAILQ_REMOVE(&list, current, pointers);
+      quantum_left = quantum_length;
+      if (!current->started)
+      {
+        current->started = true;
+        total_response_time += current_time - current->arrival_time;
+      }
+    }
+
+    // Run the current process for one time unit (or stay idle)
+    if (current != NULL)
+    {
+      current->remaining_time--;
+      quantum_left--;
+      if (current->remaining_time == 0)
+      {
+        total_waiting_time +=
+            (current_time + 1) - current->arrival_time - current->burst_time;
+        completed++;
+        current = NULL;
+        quantum_left = 0;
+      }
+    }
+
+    current_time++;
+  }
   /* End of "Your code here" */
 
   printf("Average waiting time: %.2f\n", (float)total_waiting_time / (float)size);
