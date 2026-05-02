@@ -184,8 +184,8 @@ int main(int argc, char *argv[])
       }
     }
 
-    /* If the running process used up its quantum but still has work,
-       re-queue it after any arrivals at this same time. */
+    // If the running process used up its quantum but still has work,
+    // re-queue it after any arrivals at this same time.
     if (current != NULL && quantum_left == 0)
     {
       TAILQ_INSERT_TAIL(&list, current, pointers);
@@ -212,8 +212,7 @@ int main(int argc, char *argv[])
       quantum_left--;
       if (current->remaining_time == 0)
       {
-        total_waiting_time +=
-            (current_time + 1) - current->arrival_time - current->burst_time;
+        total_waiting_time += (current_time + 1) - current->arrival_time - current->burst_time;
         completed++;
         current = NULL;
         quantum_left = 0;

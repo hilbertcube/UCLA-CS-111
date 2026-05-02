@@ -41,6 +41,16 @@ To run the included test suite:
 python -m unittest
 ```
 
+Output:
+
+```shell
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.074s
+
+OK
+```
+
 ## Cleaning up
 
 Remove the compiled binary and object files:
