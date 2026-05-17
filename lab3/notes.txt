@@ -1,0 +1,25 @@
+Using only pthread_mutex_*, you should create two thread safe versions of the hash table “add en-
+try” functions.  You only have to add locking calls to hash_table_v1_add_entry and hash_table_v2_add_entry, 
+all other functions are called serially, mainly for sanity checks.  By default there is a data race finding and adding  entries  to  the  list.  You’ll  need  to  fill i n y our README.md completely. Most sections a re w hat y ou expect from  previous labs, however there is more to add for this lab (explained below).
+
+
+- For  the  first version, v1, you should o nly b e concerned w ith correctness. Create a s ingle mutex, only for v1, and make hash_table_v1_add_entry thread safe by adding the proper locking calls.  Remember, you should only 
+modify code in hash-table-v1.c.  You’ll have to explain why your implementation is correct in your README.md. 
+You should test it versus the base hash table implementation and also add your findings to README.md.
+
+
+- For the second version, v2, you should be concerned with correctness and performance. You can now create
+as many mutexes as you like in hash-table-v2.c. Make hash_table_v2_add_entry thread safe by adding the
+proper locking calls. Similar to the first version, you’ll need to explain why your implementation is correct, test
+it’s performance against the previous implementations, and add your findings to README.md.
+
+In both cases you may add fields to any hash table struct: the hash table, hash_table_entry, or list_entry.
+Your code changes should not modify contains or get_value. Any other code modifications are okay. However,
+you should not change any functionality of the hash tables.
+
+Errors. You will need to check for errors for any pthread_mutex_* functions you use. You may simply exit
+with the proper error code. You are expected to destroy any locks you create. The given code passes valgrind
+with no memory leaks, you should not create any.
+
+Tips. Since this is a lab about concurrency and parallelism, you may want to significantly increase the number
+of cores given to your virtual machine, or run your code on a Linux machine with more cores
