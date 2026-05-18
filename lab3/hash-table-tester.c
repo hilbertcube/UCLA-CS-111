@@ -26,6 +26,7 @@ static struct argp_option options[] = {
 	{ 0 } 
 };
 
+// 
 static uint32_t parse_uint32_t(const char *string) {
 	uint32_t current = 0;
 	uint8_t i = 0;
