@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Linux (Clang)",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/local/opt/libomp/include",
+                "/usr/lib/x86_64-linux-gnu/openmpi/include",
+                "/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerArgs": [
+                "-fopenmp"
+            ]
+        }
+    ],
+    "version": 4
+}
