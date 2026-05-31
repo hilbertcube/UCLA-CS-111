@@ -16,11 +16,24 @@ An ext2 volume is divided into fixed-size **blocks** (commonly 1 KiB, 2 KiB, or 
 
 ![image alt](media/image.png)
 
+
 Each block group has the same internal layout:
 
-```text
-[ Superblock (copy) | Group Descriptor Table (copy) | Block Bitmap | Inode Bitmap | Inode Table | Data Blocks ]
-```
+![image alt](media/ext2.png)
+
+<!-- ```
+Block 0    : boot / unused reserved block
+Block 1    : superblock
+Block 2    : block group descriptor table
+Block 3    : block bitmap
+Block 4    : inode bitmap
+Blocks 5-20: inode table
+             128 inodes × 128 bytes each = 16384 bytes = 16 blocks
+Block 21   : root directory data block
+Block 22   : lost+found directory data block
+Block 23   : hello-world file data block
+Blocks 24-1023: free data blocks
+``` -->
 
 | Region               | Purpose                                              |
 |----------------------|------------------------------------------------------|

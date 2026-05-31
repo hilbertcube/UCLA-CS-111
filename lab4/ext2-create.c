@@ -15,14 +15,14 @@ typedef uint32_t u32;
 typedef int16_t i16;
 typedef int32_t i32;
 
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 1024 // 1 KiB block size
 #define BLOCK_OFFSET(i) (i * BLOCK_SIZE)
 #define NUM_BLOCKS 1024
 #define NUM_INODES 128
 
-#define LOST_AND_FOUND_INO 11
-#define HELLO_WORLD_INO    12
-#define HELLO_INO          13
+#define LOST_AND_FOUND_INO 11 // inode 11
+#define HELLO_WORLD_INO    12 // inode 12
+#define HELLO_INO          13 // inode 13
 #define LAST_INO           HELLO_INO
 
 #define SUPERBLOCK_BLOCKNO             1
@@ -38,36 +38,46 @@ typedef int32_t i32;
 #define NUM_FREE_BLOCKS (NUM_BLOCKS - LAST_BLOCK - 1)
 #define NUM_FREE_INODES (NUM_INODES - LAST_INO)
 
+/// more macros
+#define BLOCKS_PER_GROUP 8192 // 1024 * 8 bits
+#define FRAGS_PER_GROUP 8192
+/// end
+
 #define EXT2_SUPER_MAGIC 0xEF53
 
 /* http://www.nongnu.org/ext2-doc/ext2.html */
 /* http://www.science.smith.edu/~nhowe/262/oldlabs/ext2.html */
 
-#define	EXT2_BAD_INO             1
-#define EXT2_ROOT_INO            2
+#define	EXT2_BAD_INO             1 // inode 1
+#define EXT2_ROOT_INO            2 // inode 2
 #define EXT2_GOOD_OLD_FIRST_INO 11
 
 #define EXT2_GOOD_OLD_REV 0
 
-#define EXT2_S_IFSOCK 0xC000
-#define EXT2_S_IFLNK  0xA000
-#define EXT2_S_IFREG  0x8000
-#define EXT2_S_IFBLK  0x6000
-#define EXT2_S_IFDIR  0x4000
-#define EXT2_S_IFCHR  0x2000
-#define EXT2_S_IFIFO  0x1000
-#define EXT2_S_ISUID  0x0800
-#define EXT2_S_ISGID  0x0400
-#define EXT2_S_ISVTX  0x0200
-#define EXT2_S_IRUSR  0x0100
-#define EXT2_S_IWUSR  0x0080
-#define EXT2_S_IXUSR  0x0040
-#define EXT2_S_IRGRP  0x0020
-#define EXT2_S_IWGRP  0x0010
-#define EXT2_S_IXGRP  0x0008
-#define EXT2_S_IROTH  0x0004
-#define EXT2_S_IWOTH  0x0002
-#define EXT2_S_IXOTH  0x0001
+/// File types (bits 15-12)
+#define EXT2_S_IFSOCK 0xC000 // socket
+#define EXT2_S_IFLNK  0xA000 // symlink
+#define EXT2_S_IFREG  0x8000 // regular file
+#define EXT2_S_IFBLK  0x6000 // block device (e.g /dev/sda)
+#define EXT2_S_IFDIR  0x4000 // directory
+#define EXT2_S_IFCHR  0x2000 // character device (e.g. /dev/tty)
+#define EXT2_S_IFIFO  0x1000 // FIF0 / named pipe
+
+/// Special permission bits (bits 11-9)
+#define EXT2_S_ISUID  0x0800 // set uid: run as file owner's UID
+#define EXT2_S_ISGID  0x0400 // set gid: run as file owner's GID
+#define EXT2_S_ISVTX  0x0200 // sticky bit (on directories), only owner can delete their own files
+
+/// Permission bits (bits 8-0)
+#define EXT2_S_IRUSR  0x0100 // owner read
+#define EXT2_S_IWUSR  0x0080 // owner write
+#define EXT2_S_IXUSR  0x0040 // owner execute
+#define EXT2_S_IRGRP  0x0020 // group read
+#define EXT2_S_IWGRP  0x0010 // group write
+#define EXT2_S_IXGRP  0x0008 // group execute
+#define EXT2_S_IROTH  0x0004 // others read
+#define EXT2_S_IWOTH  0x0002 // others write
+#define EXT2_S_IXOTH  0x0001 // others execute
 
 #define	EXT2_NDIR_BLOCKS 12
 #define	EXT2_IND_BLOCK   EXT2_NDIR_BLOCKS
@@ -85,8 +95,8 @@ typedef int32_t i32;
  * 
  */
 struct ext2_superblock {
-	u32 s_inodes_count;					// Total number of inodes in the file system
-	u32 s_blocks_count;  				// Total number of blocks in the file system
+	u32 s_inodes_count;					// Total # of inodes in the file system, each file corresponds to an inode
+	u32 s_blocks_count;  				// Total # of blocks in the file system, 1 file can span multiple blocks
 	u32 s_r_blocks_count;  			// Number of blocks reserved for the superuser (root)
 	u32 s_free_blocks_count;  	// Number of free blocks available in the file system
 	u32 s_free_inodes_count; 		// Number of free inodes available in the file system
@@ -210,17 +220,19 @@ void write_superblock(int fd) {
 	superblock.s_r_blocks_count = 0;
 	superblock.s_free_blocks_count = NUM_FREE_BLOCKS;
 	superblock.s_free_inodes_count = NUM_FREE_INODES;
-	superblock.s_first_data_block = -1; /* First Data Block */
+
+	// should be 1 since the block
+	superblock.s_first_data_block = SUPERBLOCK_BLOCKNO; /* First Data Block */
 	superblock.s_log_block_size = 0;					/* 1024 */
 	superblock.s_log_frag_size = 0;						/* 1024 */
-	superblock.s_blocks_per_group = -1;
-	superblock.s_frags_per_group = -1;
-	superblock.s_inodes_per_group = -1;
+	superblock.s_blocks_per_group = BLOCKS_PER_GROUP;
+	superblock.s_frags_per_group = FRAGS_PER_GROUP;
+	superblock.s_inodes_per_group = NUM_INODES;
 	superblock.s_mtime = 0;				/* Mount time */
 	superblock.s_wtime = current_time;	/* Write time */
 	superblock.s_mnt_count         = 0; /* Number of times mounted so far */
 	superblock.s_max_mnt_count     = 0; /* Make this unlimited */
-	superblock.s_magic = -1; /* ext2 Signature */
+	superblock.s_magic = EXT2_SUPER_MAGIC; /* ext2 Signature magic number */
 	superblock.s_state             = 0; /* File system is clean */
 	superblock.s_errors            = 0; /* Ignore the error (continue on) */
 	superblock.s_minor_rev_level   = 0; /* Leave this as 0 */
@@ -268,12 +280,12 @@ void write_block_group_descriptor_table(int fd) {
 
 	// TODO It's all yours
 	// TODO finish the block group descriptor number setting
-	block_group_descriptor.bg_block_bitmap = -1;
-	block_group_descriptor.bg_inode_bitmap = -1;
-	block_group_descriptor.bg_inode_table = -1;
-	block_group_descriptor.bg_free_blocks_count = -1;
-	block_group_descriptor.bg_free_inodes_count = -1;
-	block_group_descriptor.bg_used_dirs_count = -1;
+	block_group_descriptor.bg_block_bitmap = BLOCK_BITMAP_BLOCKNO;
+	block_group_descriptor.bg_inode_bitmap = INODE_BITMAP_BLOCKNO;
+	block_group_descriptor.bg_inode_table = INODE_TABLE_BLOCKNO;
+	block_group_descriptor.bg_free_blocks_count = NUM_FREE_BLOCKS;
+	block_group_descriptor.bg_free_inodes_count = NUM_FREE_INODES;
+	block_group_descriptor.bg_used_dirs_count = 2; // there's two dirs: / and lost+found
 
 	ssize_t size = sizeof(block_group_descriptor);
 	if (write(fd, &block_group_descriptor, size) != size) {
@@ -292,6 +304,16 @@ void write_block_bitmap(int fd)
 	// TODO It's all yours
 	u8 map_value[BLOCK_SIZE];
 
+	// set n (BLOCK_SIZE) bytes of map_value to 0
+	memset(map_value, 0, BLOCK_SIZE);
+
+	// set first three to 0b11111111
+
+	// blocks 0-23 are used (3 blocks = 3 bytes)
+	map_value[0] = 0xFF; // block 0-7
+	map_value[1] = 0xFF; // block 8-15
+	map_value[2] = 0xFF; // block 16-23
+
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
 		errno_exit("write");
@@ -308,6 +330,12 @@ void write_inode_bitmap(int fd)
 
 	// TODO It's all yours
 	u8 map_value[BLOCK_SIZE];
+
+	// set n (BLOCK_SIZE) bytes of map_value to 0
+	memset(map_value, 0, BLOCK_SIZE);
+
+	map_value[0] = 0xFF; // inode 1-8
+	map_value[1] = 0x1F; // inode 9-13
 
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
@@ -329,20 +357,16 @@ void write_inode(int fd, u32 index, struct ext2_inode *inode) {
 	}
 }
 
-void write_inode_table(int fd) {
-	u32 current_time = get_current_time();
-
+// lost+found directory
+void write_lost_and_found_inode(int fd, u32 current_time)
+{
 	struct ext2_inode lost_and_found_inode = {0};
 	lost_and_found_inode.i_mode = EXT2_S_IFDIR
-															| EXT2_S_IRUSR
-															| EXT2_S_IWUSR
-															| EXT2_S_IXUSR
-															| EXT2_S_IRGRP
-															| EXT2_S_IXGRP
-															| EXT2_S_IROTH
-															| EXT2_S_IXOTH;
+															| EXT2_S_IRUSR | EXT2_S_IWUSR | EXT2_S_IXUSR
+															| EXT2_S_IRGRP | EXT2_S_IXGRP
+															| EXT2_S_IROTH | EXT2_S_IXOTH;
 	lost_and_found_inode.i_uid = 0;
-	lost_and_found_inode.i_size = 1024;
+	lost_and_found_inode.i_size = BLOCK_SIZE;
 	lost_and_found_inode.i_atime = current_time;
 	lost_and_found_inode.i_ctime = current_time;
 	lost_and_found_inode.i_mtime = current_time;
@@ -352,14 +376,134 @@ void write_inode_table(int fd) {
 	lost_and_found_inode.i_blocks = 2; /* These are oddly 512 blocks */
 	lost_and_found_inode.i_block[0] = LOST_AND_FOUND_DIR_BLOCKNO;
 	write_inode(fd, LOST_AND_FOUND_INO, &lost_and_found_inode);
+}
+
+// root directory
+void write_root_inode(int fd, u32 current_time)
+{
+	struct ext2_inode root_inode = {0};
+	root_inode.i_mode = EXT2_S_IFDIR           // it's a directory
+										| EXT2_S_IRUSR | EXT2_S_IWUSR | EXT2_S_IXUSR   // rwx for owner
+										| EXT2_S_IRGRP | EXT2_S_IXGRP                  // r-x for group
+										| EXT2_S_IROTH | EXT2_S_IXOTH;                 // r-x for others (755)
+	root_inode.i_uid = 0;
+	root_inode.i_size = BLOCK_SIZE; // one full 1024-byte block of dir entries
+	root_inode.i_atime = current_time;
+	root_inode.i_ctime = current_time;
+	root_inode.i_mtime = current_time;
+	root_inode.i_dtime = 0;
+	root_inode.i_gid = 0;
+	// link count for a directory = 2 base (. and ..) + one per subdirectory
+	// root's '.' points to itself, root's '..' also points to itself,
+	// and lost+found's '..' points back to root → total 3
+	root_inode.i_links_count = 3;
+	root_inode.i_blocks = 2;                   // one 1024-byte block = 2 × 512-byte sectors
+	root_inode.i_block[0] = ROOT_DIR_BLOCKNO;  // block 21 holds the root dir entries
+	write_inode(fd, EXT2_ROOT_INO, &root_inode);
+}
+
+// regular file
+void write_hello_world_inode(int fd, u32 current_time)
+{
+	struct ext2_inode hello_world_inode = {0};
+	hello_world_inode.i_mode = EXT2_S_IFREG   // it's a regular file
+														| EXT2_S_IRUSR | EXT2_S_IWUSR  // rw- for owner
+														| EXT2_S_IRGRP                  // r-- for group
+														| EXT2_S_IROTH;                 // r-- for others (644)
+	hello_world_inode.i_uid = 0;
+	hello_world_inode.i_size = 12;             // strlen("Hello world\n") == 12
+	hello_world_inode.i_atime = current_time;
+	hello_world_inode.i_ctime = current_time;
+	hello_world_inode.i_mtime = current_time;
+	hello_world_inode.i_dtime = 0;
+	hello_world_inode.i_gid = 0;
+	hello_world_inode.i_links_count = 1;       // one directory entry points to this inode
+	hello_world_inode.i_blocks = 2;            // one 1024-byte block = 2 × 512-byte sectors
+	hello_world_inode.i_block[0] = HELLO_WORLD_FILE_BLOCKNO;  // block 23 holds the content
+	write_inode(fd, HELLO_WORLD_INO, &hello_world_inode);
+}
+
+// hello symbolic link
+void write_hello_inode(int fd, u32 current_time)
+{
+	struct ext2_inode hello_inode = {0};
+	hello_inode.i_mode = EXT2_S_IFLNK         // it's a symbolic link
+											| EXT2_S_IRUSR | EXT2_S_IWUSR | EXT2_S_IXUSR  // rwx
+											| EXT2_S_IRGRP | EXT2_S_IWGRP | EXT2_S_IXGRP  // rwx
+											| EXT2_S_IROTH | EXT2_S_IWOTH | EXT2_S_IXOTH;  // rwx (lrwxrwxrwx)
+	hello_inode.i_uid = 0;
+	hello_inode.i_size = 11;                   // strlen("hello-world") == 11
+	hello_inode.i_atime = current_time;
+	hello_inode.i_ctime = current_time;
+	hello_inode.i_mtime = current_time;
+	hello_inode.i_dtime = 0;
+	hello_inode.i_gid = 0;
+	hello_inode.i_links_count = 1;
+	// Fast symlink: target string fits in 60 bytes, so it's stored directly
+	// in the i_block array itself — no data block is allocated.
+	// i_blocks stays 0 because no disk block is used.
+	hello_inode.i_blocks = 0;
+	memcpy(hello_inode.i_block, "hello-world", 11);
+	write_inode(fd, HELLO_INO, &hello_inode);
+}
+
+void write_inode_table(int fd) {
+	u32 current_time = get_current_time();
+	write_lost_and_found_inode(fd, current_time); // Inode 11: lost+found directory
 
 	// TODO It's all yours
 	// TODO finish the inode entries for the other files
+
+	write_root_inode(fd, current_time); // Inode 2: root directory '/' 
+	write_hello_world_inode(fd, current_time); // Inode 12: hello-world regular file
+	write_hello_inode(fd, current_time); // Inode 13: hello symlink --> "hello-world"
+	
 }
 
 void write_root_dir_block(int fd)
 {
 	// TODO It's all yours
+	off_t off = BLOCK_OFFSET(ROOT_DIR_BLOCKNO);
+	off = lseek(fd, off, SEEK_SET);
+	if (off == -1) {
+		errno_exit("lseek");
+	}
+
+	ssize_t bytes_remaining = BLOCK_SIZE;
+
+	struct ext2_dir_entry current_entry = {0};
+	dir_entry_set(current_entry, EXT2_ROOT_INO, ".");
+	dir_entry_write(current_entry, fd);
+
+	bytes_remaining -= current_entry.rec_len;
+
+	struct ext2_dir_entry parent_entry = {0};
+	dir_entry_set(parent_entry, EXT2_ROOT_INO, "..");
+	dir_entry_write(parent_entry, fd);
+
+	bytes_remaining -= parent_entry.rec_len;
+
+	struct ext2_dir_entry lost_and_found_entry = {0};
+	dir_entry_set(lost_and_found_entry, LOST_AND_FOUND_INO, "lost+found");
+	dir_entry_write(lost_and_found_entry, fd);
+
+	bytes_remaining -= lost_and_found_entry.rec_len;
+
+	struct ext2_dir_entry hello_world_entry = {0};
+	dir_entry_set(hello_world_entry, HELLO_WORLD_INO, "hello-world");
+	dir_entry_write(hello_world_entry, fd);
+
+	bytes_remaining -= hello_world_entry.rec_len;
+
+	struct ext2_dir_entry hello_symlink_entry = {0};
+	dir_entry_set(hello_symlink_entry, HELLO_INO, "hello");
+	dir_entry_write(hello_symlink_entry, fd);
+
+	bytes_remaining -= hello_symlink_entry.rec_len;
+
+	struct ext2_dir_entry fill_entry = {0};
+	fill_entry.rec_len = bytes_remaining;
+	dir_entry_write(fill_entry, fd);
 }
 
 void write_lost_and_found_dir_block(int fd) {
@@ -371,26 +515,47 @@ void write_lost_and_found_dir_block(int fd) {
 
 	ssize_t bytes_remaining = BLOCK_SIZE;
 
+	// write the . entry
 	struct ext2_dir_entry current_entry = {0};
 	dir_entry_set(current_entry, LOST_AND_FOUND_INO, ".");
 	dir_entry_write(current_entry, fd);
 
 	bytes_remaining -= current_entry.rec_len;
 
+	// write the .. entry
 	struct ext2_dir_entry parent_entry = {0};
 	dir_entry_set(parent_entry, EXT2_ROOT_INO, "..");
 	dir_entry_write(parent_entry, fd);
 
 	bytes_remaining -= parent_entry.rec_len;
 
+	// write the .. entry, pointing to the root inode (inode 2)
+	// since lost+found lives under /
 	struct ext2_dir_entry fill_entry = {0};
 	fill_entry.rec_len = bytes_remaining;
 	dir_entry_write(fill_entry, fd);
 }
 
+// regular file's data block
 void write_hello_world_file_block(int fd)
 {
 	// TODO It's all yours
+	off_t off = BLOCK_OFFSET(HELLO_WORLD_FILE_BLOCKNO);
+	off = lseek(fd, off, SEEK_SET);
+	if (off == -1)
+	{
+		errno_exit("lseek");
+	}
+	if (write(fd, "Hello world\n", 12) != 12)
+	{
+		errno_exit("write");
+	}
+
+	u8 padding[BLOCK_SIZE - 12] = {0};
+	if(write(fd, padding, sizeof(padding)) != sizeof(padding))
+	{
+		errno_exit("write");
+	}
 }
 
 int main(int argc, char *argv[]) {
