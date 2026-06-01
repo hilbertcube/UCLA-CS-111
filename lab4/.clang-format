@@ -1,14 +1,14 @@
 BasedOnStyle: LLVM
 IndentWidth: 2
 TabWidth: 2
-UseTab: ForIndentation
+UseTab: Never
 ContinuationIndentWidth: 2
 ColumnLimit: 0
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: Left
 AlignOperands: Align
-AlignTrailingComments: false
+AlignTrailingComments: true
 AllowShortIfStatementsOnASingleLine: Never
 BreakBeforeBraces: Attach
 IndentCaseLabels: true
