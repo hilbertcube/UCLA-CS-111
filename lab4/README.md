@@ -27,6 +27,23 @@ mkdir mnt # create a directory to mount the file system to
 sudo mount -o loop cs111-base.img mnt # mount filesystem to directory mnt
 ```
 
+## Unit Test
+
+```bash
+python3 -m unittest 
+```
+
+Output:
+
+```bash
+mount: mnt: /media/work/UCLA/CS-111/lab4/cs111-base.img is already mounted.
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.109s
+
+OK
+```
+
 
 ## Cleaning up
 
