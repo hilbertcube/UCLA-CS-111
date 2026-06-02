@@ -147,3 +147,7 @@ Example output of fsck.ext2 cs111-base.img. You need to make sure you get the fo
   Pass 4: Checking reference counts
   Pass 5: Checking group summary information
   cs111 -base: 13/128 files (0.0% non - contiguous ), 24/1024 blocks
+
+Zip:
+
+tar -czvf 706752260.tar.gz -C .. lab4/ext2-create.c lab4/Makefile lab4/README.md lab4/test_lab4.py lab4/.clang-format

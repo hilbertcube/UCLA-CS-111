@@ -233,10 +233,10 @@ void write_superblock(int fd) {
   superblock.s_mtime = 0;                /* Mount time */
   superblock.s_wtime = current_time;     /* Write time */
   superblock.s_mnt_count = 0;            /* Number of times mounted so far */
-  superblock.s_max_mnt_count = 0;        /* Make this unlimited */
+  superblock.s_max_mnt_count = -1;       /* Make this unlimited */
   superblock.s_magic = EXT2_SUPER_MAGIC; /* ext2 Signature magic number */
-  superblock.s_state = 0;                /* File system is clean */
-  superblock.s_errors = 0;               /* Ignore the error (continue on) */
+  superblock.s_state = 1;                /* File system is clean (EXT2_VALID_FS) */
+  superblock.s_errors = 1;               /* Continue on error (EXT2_ERRORS_CONTINUE) */
   superblock.s_minor_rev_level = 0;      /* Leave this as 0 */
   superblock.s_lastcheck = current_time; /* Last check time */
   superblock.s_checkinterval = 0;        /* Force checks by making them every 1 second */
@@ -307,12 +307,18 @@ void write_block_bitmap(int fd) {
   // set n (BLOCK_SIZE) bytes of map_value to 0
   memset(map_value, 0, BLOCK_SIZE);
 
-  // set first three to 0b11111111
+  // The group covers blocks 1-1023; bit N in the bitmap = block (N+1).
+  // Blocks 1-23 are used (bits 0-22), block 24+ are free.
+  map_value[0] = 0xFF; // blocks 1-8 
+  map_value[1] = 0xFF; // blocks 9-16
 
-  // blocks 0-23 are used (3 blocks = 3 bytes)
-  map_value[0] = 0xFF; // block 0-7
-  map_value[1] = 0xFF; // block 8-15
-  map_value[2] = 0xFF; // block 16-23
+  // blocks 17-23 used (bits 16-22), block 24 free (bit 23=0)
+  map_value[2] = 0x7F; // 0b01111111
+
+  // Bit 1023 (byte 127 bit 7) = block 1024, which doesn't exist -> padding = 1
+  map_value[127] = 0x80;
+  // Bytes 128-1023: blocks 1025+ don't exist -> padding = 0xFF
+  memset(map_value + 128, 0xFF, BLOCK_SIZE - 128);
 
   if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE) {
     errno_exit("write");
@@ -331,8 +337,11 @@ void write_inode_bitmap(int fd) {
   // set n (BLOCK_SIZE) bytes of map_value to 0
   memset(map_value, 0, BLOCK_SIZE);
 
-  map_value[0] = 0xFF; // inode 1-8
-  map_value[1] = 0x1F; // inode 9-13
+  map_value[0] = 0xFF; // inodes 1-8
+  map_value[1] = 0x1F; // inodes 9-13
+
+  // Inodes 129+ don't exist; bytes 16-1023 are padding -> 0xFF
+  memset(map_value + 16, 0xFF, BLOCK_SIZE - 16);
 
   if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE) {
     errno_exit("write");
@@ -388,7 +397,7 @@ void write_root_inode(int fd, u32 current_time) {
   root_inode.i_gid = 0;
   // link count for a directory = 2 base (. and ..) + one per subdirectory
   // root's '.' points to itself, root's '..' also points to itself,
-  // and lost+found's '..' points back to root → total 3
+  // and lost+found's '..' points back to root -> total 3
   root_inode.i_links_count = 3;
   root_inode.i_blocks = 2;                  // one 1024-byte block = 2 × 512-byte sectors
   root_inode.i_block[0] = ROOT_DIR_BLOCKNO; // block 21 holds the root dir entries
@@ -402,13 +411,13 @@ void write_hello_world_inode(int fd, u32 current_time) {
                              | EXT2_S_IRUSR | EXT2_S_IWUSR // rw- for owner
                              | EXT2_S_IRGRP                // r-- for group
                              | EXT2_S_IROTH;               // r-- for others (644)
-  hello_world_inode.i_uid = 0;
+  hello_world_inode.i_uid = 1000; // specified in the lab requirements
   hello_world_inode.i_size = 12; // strlen("Hello world\n") == 12
   hello_world_inode.i_atime = current_time;
   hello_world_inode.i_ctime = current_time;
   hello_world_inode.i_mtime = current_time;
   hello_world_inode.i_dtime = 0;
-  hello_world_inode.i_gid = 0;
+  hello_world_inode.i_gid = 1000;
   hello_world_inode.i_links_count = 1;                     // one directory entry points to this inode
   hello_world_inode.i_blocks = 2;                          // one 1024-byte block = 2 × 512-byte sectors
   hello_world_inode.i_block[0] = HELLO_WORLD_FILE_BLOCKNO; // block 23 holds the content
@@ -418,17 +427,17 @@ void write_hello_world_inode(int fd, u32 current_time) {
 // hello symbolic link
 void write_hello_inode(int fd, u32 current_time) {
   struct ext2_inode hello_inode = {0};
-  hello_inode.i_mode = EXT2_S_IFLNK                                  // it's a symbolic link
-                       | EXT2_S_IRUSR | EXT2_S_IWUSR | EXT2_S_IXUSR  // rwx
-                       | EXT2_S_IRGRP | EXT2_S_IWGRP | EXT2_S_IXGRP  // rwx
-                       | EXT2_S_IROTH | EXT2_S_IWOTH | EXT2_S_IXOTH; // rwx (lrwxrwxrwx)
-  hello_inode.i_uid = 0;
+  hello_inode.i_mode = EXT2_S_IFLNK              // it's a symbolic link
+                       | EXT2_S_IRUSR | EXT2_S_IWUSR // rw- for owner
+                       | EXT2_S_IRGRP               // r-- for group
+                       | EXT2_S_IROTH;              // r-- for others (lrw-r--r--)
+  hello_inode.i_uid = 1000; // specified in lab requirements
   hello_inode.i_size = 11; // strlen("hello-world") == 11
   hello_inode.i_atime = current_time;
   hello_inode.i_ctime = current_time;
   hello_inode.i_mtime = current_time;
   hello_inode.i_dtime = 0;
-  hello_inode.i_gid = 0;
+  hello_inode.i_gid = 1000;
   hello_inode.i_links_count = 1;
   // Fast symlink: target string fits in 60 bytes, so it's stored directly
   // in the i_block array itself — no data block is allocated.
